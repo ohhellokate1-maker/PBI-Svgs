@@ -1,0 +1,139 @@
+Pipeline Timeline HTML =
+-- =========================================================
+-- Rename OrderLines and the six date columns to match your model.
+-- Stages are assumed sequential: a later stage having any date
+-- implies all earlier stages have been started too.
+-- =========================================================
+
+VAR MinOC = MIN ( OrderLines[Order Created Date] )
+VAR MaxOC = MAX ( OrderLines[Order Created Date] )
+VAR MinPP = MIN ( OrderLines[Prod Planning Date] )
+VAR MaxPP = MAX ( OrderLines[Prod Planning Date] )
+VAR MinCC = MIN ( OrderLines[Carton Commit Date] )
+VAR MaxCC = MAX ( OrderLines[Carton Commit Date] )
+VAR MinPI = MIN ( OrderLines[Print Invoice Date] )
+VAR MaxPI = MAX ( OrderLines[Print Invoice Date] )
+VAR MinIS = MIN ( OrderLines[In Shipment Date] )
+VAR MaxIS = MAX ( OrderLines[In Shipment Date] )
+VAR MinFU = MIN ( OrderLines[Fulfilled Date] )
+VAR MaxFU = MAX ( OrderLines[Fulfilled Date] )
+
+-- Has any line item reached this stage at all? --
+VAR ReachedOC = NOT ISBLANK ( MinOC )
+VAR ReachedPP = NOT ISBLANK ( MinPP )
+VAR ReachedCC = NOT ISBLANK ( MinCC )
+VAR ReachedPI = NOT ISBLANK ( MinPI )
+VAR ReachedIS = NOT ISBLANK ( MinIS )
+VAR ReachedFU = NOT ISBLANK ( MinFU )
+
+-- Furthest stage reached (1-6, 0 = nothing started) --
+VAR FurthestIndex =
+    SWITCH (
+        TRUE (),
+        ReachedFU, 6,
+        ReachedIS, 5,
+        ReachedPI, 4,
+        ReachedCC, 3,
+        ReachedPP, 2,
+        ReachedOC, 1,
+        0
+    )
+
+-- Date label per stage: "—" / single date / range --
+VAR LabelOC = IF ( ReachedOC, IF ( MinOC = MaxOC, FORMAT ( MinOC, "dd mmm" ), FORMAT ( MinOC, "dd mmm" ) & " - " & FORMAT ( MaxOC, "dd mmm" ) ), "—" )
+VAR LabelPP = IF ( ReachedPP, IF ( MinPP = MaxPP, FORMAT ( MinPP, "dd mmm" ), FORMAT ( MinPP, "dd mmm" ) & " - " & FORMAT ( MaxPP, "dd mmm" ) ), "—" )
+VAR LabelCC = IF ( ReachedCC, IF ( MinCC = MaxCC, FORMAT ( MinCC, "dd mmm" ), FORMAT ( MinCC, "dd mmm" ) & " - " & FORMAT ( MaxCC, "dd mmm" ) ), "—" )
+VAR LabelPI = IF ( ReachedPI, IF ( MinPI = MaxPI, FORMAT ( MinPI, "dd mmm" ), FORMAT ( MinPI, "dd mmm" ) & " - " & FORMAT ( MaxPI, "dd mmm" ) ), "—" )
+VAR LabelIS = IF ( ReachedIS, IF ( MinIS = MaxIS, FORMAT ( MinIS, "dd mmm" ), FORMAT ( MinIS, "dd mmm" ) & " - " & FORMAT ( MaxIS, "dd mmm" ) ), "—" )
+VAR LabelFU = IF ( ReachedFU, IF ( MinFU = MaxFU, FORMAT ( MinFU, "dd mmm" ), FORMAT ( MinFU, "dd mmm" ) & " - " & FORMAT ( MaxFU, "dd mmm" ) ), "—" )
+
+-- Title colour: navy once reached, light grey while pending --
+VAR TitleColor1 = IF ( FurthestIndex >= 1, "#1c345b", "#b3b3b3" )
+VAR TitleColor2 = IF ( FurthestIndex >= 2, "#1c345b", "#b3b3b3" )
+VAR TitleColor3 = IF ( FurthestIndex >= 3, "#1c345b", "#b3b3b3" )
+VAR TitleColor4 = IF ( FurthestIndex >= 4, "#1c345b", "#b3b3b3" )
+VAR TitleColor5 = IF ( FurthestIndex >= 5, "#1c345b", "#b3b3b3" )
+VAR TitleColor6 = IF ( FurthestIndex >= 6, "#1c345b", "#b3b3b3" )
+
+-- Date text colour: same logic, lighter grey when pending --
+VAR DateColor1 = IF ( FurthestIndex >= 1, "#4d4d4d", "#b3b3b3" )
+VAR DateColor2 = IF ( FurthestIndex >= 2, "#4d4d4d", "#b3b3b3" )
+VAR DateColor3 = IF ( FurthestIndex >= 3, "#4d4d4d", "#b3b3b3" )
+VAR DateColor4 = IF ( FurthestIndex >= 4, "#4d4d4d", "#b3b3b3" )
+VAR DateColor5 = IF ( FurthestIndex >= 5, "#4d4d4d", "#b3b3b3" )
+VAR DateColor6 = IF ( FurthestIndex >= 6, "#4d4d4d", "#b3b3b3" )
+
+-- Dot fill/border: gold ring = current stage, navy fill = completed, white/grey = pending --
+VAR Dot1 = SWITCH ( TRUE (), FurthestIndex = 1, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 1, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+VAR Dot2 = SWITCH ( TRUE (), FurthestIndex = 2, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 2, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+VAR Dot3 = SWITCH ( TRUE (), FurthestIndex = 3, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 3, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+VAR Dot4 = SWITCH ( TRUE (), FurthestIndex = 4, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 4, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+VAR Dot5 = SWITCH ( TRUE (), FurthestIndex = 5, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 5, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+VAR Dot6 = SWITCH ( TRUE (), FurthestIndex = 6, "background:#b6960B; border:2px solid #ffffff; box-shadow:0 0 0 1px #b6960B;", FurthestIndex > 6, "background:#1c345b; border:none;", "background:#ffffff; border:2px solid #d9d9d9;" )
+
+-- Leader tick only turns gold on the current stage, otherwise stays default grey --
+VAR Leader1 = IF ( FurthestIndex = 1, " background:#b6960B;", "" )
+VAR Leader2 = IF ( FurthestIndex = 2, " background:#b6960B;", "" )
+VAR Leader3 = IF ( FurthestIndex = 3, " background:#b6960B;", "" )
+VAR Leader4 = IF ( FurthestIndex = 4, " background:#b6960B;", "" )
+VAR Leader5 = IF ( FurthestIndex = 5, " background:#b6960B;", "" )
+VAR Leader6 = IF ( FurthestIndex = 6, " background:#b6960B;", "" )
+
+-- Navy connector width: from first node (x=54) up to the current stage's x position --
+VAR NavyWidth = IF ( FurthestIndex = 0, 0, ( FurthestIndex - 1 ) * 50 )
+
+RETURN
+"<div class='timeline-box' style='width:358px;height:150px;font-family:Arial,Helvetica,sans-serif;position:relative;background:#ffffff;box-sizing:border-box;'>" &
+
+"<div style='position:absolute;left:54px;width:250px;top:74px;height:2px;background:#d9d9d9;'></div>" &
+"<div style='position:absolute;left:54px;width:" & NavyWidth & "px;top:74px;height:2px;background:#1c345b;'></div>" &
+
+-- 1. Order created --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:54px;top:75px;transform:translate(-50%,-50%);" & Dot1 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:54px;top:56px;height:13px;" & Leader1 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:54px;top:25px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor1 & ";'>Order created</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor1 & ";'>" & LabelOC & "</div>" &
+"</div>" &
+
+-- 2. Prod planning --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:104px;top:75px;transform:translate(-50%,-50%);" & Dot2 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:104px;top:81px;height:14px;" & Leader2 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:104px;top:95px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor2 & ";'>Prod planning</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor2 & ";'>" & LabelPP & "</div>" &
+"</div>" &
+
+-- 3. Carton commit --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:154px;top:75px;transform:translate(-50%,-50%);" & Dot3 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:154px;top:56px;height:13px;" & Leader3 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:154px;top:25px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor3 & ";'>Carton commit</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor3 & ";'>" & LabelCC & "</div>" &
+"</div>" &
+
+-- 4. Print invoice --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:204px;top:75px;transform:translate(-50%,-50%);" & Dot4 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:204px;top:81px;height:14px;" & Leader4 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:204px;top:95px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor4 & ";'>Print invoice</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor4 & ";'>" & LabelPI & "</div>" &
+"</div>" &
+
+-- 5. In shipment --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:254px;top:75px;transform:translate(-50%,-50%);" & Dot5 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:254px;top:56px;height:13px;" & Leader5 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:254px;top:25px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor5 & ";'>In shipment</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor5 & ";'>" & LabelIS & "</div>" &
+"</div>" &
+
+-- 6. Fulfilled --
+"<div style='position:absolute;width:12px;height:12px;border-radius:50%;box-sizing:border-box;left:304px;top:75px;transform:translate(-50%,-50%);" & Dot6 & "'></div>" &
+"<div style='position:absolute;width:1px;background:#d3d3d3;left:304px;top:81px;height:14px;" & Leader6 & "'></div>" &
+"<div style='position:absolute;width:96px;text-align:center;white-space:nowrap;transform:translateX(-50%);left:304px;top:95px;'>" &
+"<div style='font-size:10.5px;font-weight:bold;line-height:1.2;color:" & TitleColor6 & ";'>Fulfilled</div>" &
+"<div style='font-size:9.5px;margin-top:3px;display:inline-block;background:#f0f0f0;border-radius:3px;padding:1px 6px;color:" & DateColor6 & ";'>" & LabelFU & "</div>" &
+"</div>" &
+
+"</div>"
